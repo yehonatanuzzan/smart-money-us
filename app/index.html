@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0D1B30">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Smart Money">
+  <meta name="description" content="Smart Money — Smart personal finance tracking">
+  <title>Smart Money</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icon-512.png">
+  <link rel="shortcut icon" type="image/png" href="icon-512.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+  <link rel="stylesheet" href="app.css?v=31">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<!-- Splash screen -->
+<div id="splash">
+  <div class="splash-logo">💰</div>
+  <h1 class="splash-title">Smart Money</h1>
+  <p class="splash-sub">Smart personal finance tracking</p>
+  <div class="splash-loader"></div>
+</div>
+
+<!-- Auth shell -->
+<div id="auth-shell" style="display:none">
+  <main class="auth-screen">
+    <section class="auth-panel">
+      <div class="auth-brand">
+        <div class="auth-logo">💰</div>
+        <div>
+          <h1>Smart Money</h1>
+          <p>Personal finance</p>
+        </div>
+      </div>
+      <div id="auth-content"></div>
+    </section>
+  </main>
+</div>
+
+<!-- App shell (hidden until splash completes) -->
+<div id="app-shell" style="display:none">
+
+  <!-- Sidebar (desktop only) -->
+  <aside id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-logo-wrap">
+        <div class="sidebar-logo">💰</div>
+      </div>
+      <div class="sidebar-brand-copy">
+        <div class="sidebar-title">Smart Money</div>
+        <div class="sidebar-subtitle">Personal finance</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-btn" data-view="dashboard">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Dashboard</span>
+      </button>
+      <button class="nav-btn" data-view="income">
+        <span class="nav-icon">💰</span>
+        <span class="nav-label">Income</span>
+      </button>
+      <button class="nav-btn" data-view="expenses">
+        <span class="nav-icon">💸</span>
+        <span class="nav-label">Expenses</span>
+      </button>
+      <button class="nav-btn" data-view="budget">
+        <span class="nav-icon">🎯</span>
+        <span class="nav-label">Budget</span>
+      </button>
+      <button class="nav-btn" data-view="analysis">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Analysis</span>
+      </button>
+      <button class="nav-btn" data-view="profile">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">Profile</span>
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-footer-card">
+        <div class="sidebar-footer-text">Real talk</div>
+        <div class="sidebar-footer-sub">Cashflow · Budget · Analysis</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Right side: header + content -->
+  <div id="app-right">
+
+    <!-- Header -->
+    <header id="header">
+      <div class="header-inner">
+        <span id="header-title">Dashboard</span>
+        <div class="header-right">
+          <div class="month-nav">
+            <button class="month-nav-btn" onclick="prevMonth()">‹</button>
+            <button id="month-label" class="month-nav-label" onclick="openPeriodPicker()" type="button"></button>
+            <button class="month-nav-btn" onclick="nextMonth()">›</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main content area -->
+    <main id="main">
+      <div id="view-dashboard" class="view"></div>
+      <div id="view-income"    class="view"></div>
+      <div id="view-expenses"  class="view"></div>
+      <div id="view-budget"    class="view"></div>
+      <div id="view-analysis"  class="view"></div>
+      <div id="view-profile"   class="view"></div>
+    </main>
+
+    <!-- Bottom navigation (mobile only) -->
+    <nav id="bottom-nav">
+      <button class="nav-btn" data-view="dashboard">
+        <div class="nav-icon-wrap"><span class="nav-icon">🏠</span></div>
+        <span class="nav-label">Home</span>
+      </button>
+      <button class="nav-btn" data-view="income">
+        <div class="nav-icon-wrap"><span class="nav-icon">💰</span></div>
+        <span class="nav-label">Income</span>
+      </button>
+      <button class="nav-btn" data-view="expenses">
+        <div class="nav-icon-wrap"><span class="nav-icon">💸</span></div>
+        <span class="nav-label">Expenses</span>
+      </button>
+      <button class="nav-btn" data-view="budget">
+        <div class="nav-icon-wrap"><span class="nav-icon">🎯</span></div>
+        <span class="nav-label">Budget</span>
+      </button>
+      <button class="nav-btn" data-view="analysis">
+        <div class="nav-icon-wrap"><span class="nav-icon">📊</span></div>
+        <span class="nav-label">Analysis</span>
+      </button>
+      <button class="nav-btn" data-view="profile">
+        <div class="nav-icon-wrap"><span class="nav-icon">👤</span></div>
+        <span class="nav-label">Profile</span>
+      </button>
+    </nav>
+
+  </div><!-- /app-right -->
+
+</div>
+
+<!-- Modal bottom sheet -->
+<div id="modal-overlay">
+  <div id="modal-sheet">
+    <div class="modal-handle"></div>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast"></div>
+
+<script src="app.js?v=1"></script>
+</body>
+</html>

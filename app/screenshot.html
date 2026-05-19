@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0D1B30">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Smart Money</title>
+  <link rel="stylesheet" href="app.css?v=23">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    // ── Pre-populate localStorage so the app boots straight to dashboard ──
+
+    // 1. Auth: logged-in admin session
+    localStorage.setItem('smoney_auth', JSON.stringify({
+      users: [
+        { uid: 'mock-admin',  firstName: 'admin',  username: 'admin',  email: 'admin@smartmoney.local', displayName: 'admin',  password: '1234', paid: true },
+        { uid: 'mock-israel', firstName: 'ישראל',  username: 'israel', email: 'israel@gmail.com',       displayName: 'ישראל', password: '1234', paid: true }
+      ],
+      session: { uid: 'mock-israel', signedInAt: '2025-04-01T00:00:00.000Z' },
+      pendingUser: null
+    }));
+
+    // 2. App data: sample transactions for April 2025
+    localStorage.setItem('smoney_data', JSON.stringify({
+      savingsGoal: 20,
+      cycleStartDay: 1,
+      selectedYear: 2025,
+      selectedMonth: 4,
+      language: 'he',
+      incomes: [
+        { id: 'i1', date: '2025-04-01', type: 'משכורת',                    description: 'משכורת אפריל',   amount: 12500 },
+        { id: 'i2', date: '2025-04-22', type: 'עבודה עצמאית/פרילנס',       description: 'ייעוץ',           amount: 1800  },
+        { id: 'i3', date: '2025-03-01', type: 'משכורת',                    description: 'משכורת מרץ',      amount: 12500 },
+        { id: 'i4', date: '2025-02-01', type: 'משכורת',                    description: 'משכורת פברואר',   amount: 12500 },
+        { id: 'i5', date: '2025-02-20', type: 'בונוס',                     description: 'בונוס רבעוני',    amount: 3000  },
+        { id: 'i6', date: '2025-01-01', type: 'משכורת',                    description: 'משכורת ינואר',    amount: 12500 },
+        { id: 'i7', date: '2025-01-15', type: 'עבודה עצמאית/פרילנס',       description: 'פרויקט עיצוב',    amount: 2800  }
+      ],
+      expenses: [
+        { id: 'e1',  date: '2025-04-03', category: 'דיור',               subCategory: 'שכירות',         description: 'שכירות אפריל',       paymentMethod: 'העברה בנקאית', amount: 3500, essential: true  },
+        { id: 'e2',  date: '2025-04-06', category: 'מזון',               subCategory: 'סופרמרקט',       description: 'רמי לוי',            paymentMethod: 'כרטיס אשראי',  amount: 690,  essential: true  },
+        { id: 'e3',  date: '2025-04-10', category: 'תחבורה',             subCategory: 'אחזקת רכב',      description: 'טיפול',               paymentMethod: 'מזומן',        amount: 580,  essential: true  },
+        { id: 'e4',  date: '2025-04-12', category: 'קניות',              subCategory: 'בגדים',          description: 'H&M',                paymentMethod: 'כרטיס אשראי',  amount: 380,  essential: false },
+        { id: 'e5',  date: '2025-04-20', category: 'חיסכון והשקעות',    subCategory: 'חיסכון',         description: 'העברה לחיסכון',       paymentMethod: 'העברה בנקאית', amount: 1000, essential: true  },
+        { id: 'e6',  date: '2025-04-21', category: 'פנאי ובידור',        subCategory: 'הופעות',         description: 'הופעה',               paymentMethod: 'מזומן',        amount: 250,  essential: false },
+        { id: 'e7',  date: '2025-04-08', category: 'מנויים',             subCategory: 'נטפליקס',        description: 'נטפליקס',            paymentMethod: 'כרטיס אשראי',  amount: 55,   essential: false },
+        { id: 'e8',  date: '2025-04-09', category: 'בריאות',             subCategory: 'ביטוח בריאות',  description: 'מכבי',                paymentMethod: 'העברה בנקאית', amount: 350,  essential: true  },
+        { id: 'e9',  date: '2025-03-03', category: 'דיור',               subCategory: 'שכירות',         description: 'שכירות מרץ',          paymentMethod: 'העברה בנקאית', amount: 3500, essential: true  },
+        { id: 'e10', date: '2025-03-05', category: 'מזון',               subCategory: 'סופרמרקט',       description: 'שופרסל',              paymentMethod: 'כרטיס אשראי',  amount: 720,  essential: true  },
+        { id: 'e11', date: '2025-03-12', category: 'תחבורה',             subCategory: 'דלק',            description: 'פז',                  paymentMethod: 'כרטיס אשראי',  amount: 340,  essential: true  },
+        { id: 'e12', date: '2025-03-15', category: 'פנאי ובידור',        subCategory: 'טיולים',         description: 'סוף שבוע בצפון',      paymentMethod: 'כרטיס אשראי',  amount: 850,  essential: false },
+        { id: 'e13', date: '2025-02-03', category: 'דיור',               subCategory: 'שכירות',         description: 'שכירות פברואר',       paymentMethod: 'העברה בנקאית', amount: 3500, essential: true  },
+        { id: 'e14', date: '2025-02-05', category: 'מזון',               subCategory: 'סופרמרקט',       description: 'רמי לוי',            paymentMethod: 'כרטיס אשראי',  amount: 650,  essential: true  },
+        { id: 'e15', date: '2025-02-20', category: 'קניות',              subCategory: 'אלקטרוניקה',     description: 'אוזניות',             paymentMethod: 'כרטיס אשראי',  amount: 490,  essential: false },
+        { id: 'e16', date: '2025-01-03', category: 'דיור',               subCategory: 'שכירות',         description: 'שכירות ינואר',        paymentMethod: 'העברה בנקאית', amount: 3500, essential: true  },
+        { id: 'e17', date: '2025-01-05', category: 'מזון',               subCategory: 'סופרמרקט',       description: 'שופרסל',              paymentMethod: 'כרטיס אשראי',  amount: 780,  essential: true  },
+        { id: 'e18', date: '2025-01-12', category: 'מזון',               subCategory: 'מסעדות',         description: 'ארוחת ערב',           paymentMethod: 'כרטיס אשראי',  amount: 240,  essential: false },
+        { id: 'e19', date: '2025-01-18', category: 'קניות',              subCategory: 'בגדים',          description: 'זארה',                paymentMethod: 'כרטיס אשראי',  amount: 450,  essential: false }
+      ]
+    }));
+
+    // 3. Skip splash: make setTimeout fire instantly for the 1800ms / 500ms delays
+    const _origSetTimeout = window.setTimeout;
+    window.setTimeout = function(fn, delay, ...args) {
+      if (delay === 1800 || delay === 500) return _origSetTimeout(fn, 0, ...args);
+      return _origSetTimeout(fn, delay, ...args);
+    };
+  </script>
+</head>
+<body>
+
+<!-- Splash screen -->
+<div id="splash">
+  <div class="splash-logo">💰</div>
+  <h1 class="splash-title">Smart Money</h1>
+  <p class="splash-sub">מעקב פיננסי אישי חכם</p>
+  <div class="splash-loader"></div>
+</div>
+
+<!-- Auth shell -->
+<div id="auth-shell" style="display:none">
+  <main class="auth-screen">
+    <section class="auth-panel">
+      <div class="auth-brand">
+        <div class="auth-logo">💰</div>
+        <div><h1>Smart Money</h1><p>ניהול פיננסי אישי</p></div>
+      </div>
+      <div id="auth-content"></div>
+    </section>
+  </main>
+</div>
+
+<!-- App shell -->
+<div id="app-shell" style="display:none">
+
+  <aside id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-logo-wrap"><div class="sidebar-logo">💰</div></div>
+      <div class="sidebar-brand-copy">
+        <div class="sidebar-title">Smart Money</div>
+        <div class="sidebar-subtitle">ניהול פיננסי אישי</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-btn" data-view="dashboard"><span class="nav-icon">🏠</span><span class="nav-label">לוח בקרה</span></button>
+      <button class="nav-btn" data-view="income"><span class="nav-icon">💰</span><span class="nav-label">הכנסות</span></button>
+      <button class="nav-btn" data-view="expenses"><span class="nav-icon">💸</span><span class="nav-label">הוצאות</span></button>
+      <button class="nav-btn" data-view="budget"><span class="nav-icon">🎯</span><span class="nav-label">תקציב</span></button>
+      <button class="nav-btn" data-view="analysis"><span class="nav-icon">📊</span><span class="nav-label">ניתוח</span></button>
+      <button class="nav-btn" data-view="profile"><span class="nav-icon">👤</span><span class="nav-label">פרופיל</span></button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-footer-card">
+        <div class="sidebar-footer-text">תכל׳ס</div>
+        <div class="sidebar-footer-sub">תזרים · תקציב · ניתוח</div>
+      </div>
+    </div>
+  </aside>
+
+  <div id="app-right">
+    <header id="header">
+      <div class="header-inner">
+        <span id="header-title">לוח בקרה</span>
+        <div class="header-right">
+          <div class="month-nav">
+            <button class="month-nav-btn" onclick="nextMonth()">‹</button>
+            <button id="month-label" class="month-nav-label" onclick="openPeriodPicker()" type="button"></button>
+            <button class="month-nav-btn" onclick="prevMonth()">›</button>
+          </div>
+        </div>
+      </div>
+    </header>
+    <main id="main">
+      <div id="view-dashboard" class="view"></div>
+      <div id="view-income"    class="view"></div>
+      <div id="view-expenses"  class="view"></div>
+      <div id="view-budget"    class="view"></div>
+      <div id="view-analysis"  class="view"></div>
+      <div id="view-profile"   class="view"></div>
+    </main>
+    <nav id="bottom-nav">
+      <button class="nav-btn" data-view="dashboard"><div class="nav-icon-wrap"><span class="nav-icon">🏠</span></div><span class="nav-label">בית</span></button>
+      <button class="nav-btn" data-view="income"><div class="nav-icon-wrap"><span class="nav-icon">💰</span></div><span class="nav-label">הכנסות</span></button>
+      <button class="nav-btn" data-view="expenses"><div class="nav-icon-wrap"><span class="nav-icon">💸</span></div><span class="nav-label">הוצאות</span></button>
+      <button class="nav-btn" data-view="budget"><div class="nav-icon-wrap"><span class="nav-icon">🎯</span></div><span class="nav-label">תקציב</span></button>
+      <button class="nav-btn" data-view="analysis"><div class="nav-icon-wrap"><span class="nav-icon">📊</span></div><span class="nav-label">ניתוח</span></button>
+      <button class="nav-btn" data-view="profile"><div class="nav-icon-wrap"><span class="nav-icon">👤</span></div><span class="nav-label">פרופיל</span></button>
+    </nav>
+  </div>
+
+</div>
+
+<div id="modal-overlay">
+  <div id="modal-sheet">
+    <div class="modal-handle"></div>
+    <div id="modal-content"></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script src="app.js?v=27"></script>
+</body>
+</html>

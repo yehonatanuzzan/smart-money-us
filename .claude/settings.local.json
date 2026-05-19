@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(zip -r app_deploy_new.zip app/)"
+    ]
+  }
+}
